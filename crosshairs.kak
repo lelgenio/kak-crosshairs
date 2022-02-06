@@ -16,10 +16,10 @@ define-command -hidden crosshairs-highlight-line -docstring "Highlight current l
     try %{ add-highlighter window/crosshairs-line line %val{cursor_line} crosshairs_line }
 }
 
-define-command -hidden crosshairs-update %{
+define-command -hidden crosshairs-update-drawing %{
     evaluate-commands %{
-    %opt(highlight_current_line_hook_cmd)
-    %opt(highlight_current_column_hook_cmd)
+        %opt(highlight_current_line_hook_cmd)
+        %opt(highlight_current_column_hook_cmd)
 }}
 
 define-command -hidden -docstring "update hooks for highlighters" \
@@ -40,11 +40,16 @@ crosshairs-change-hooks %{
         fi
         # set hook
         if [ "$kak_opt_highlight_current_column" = true ] || [ "$kak_opt_highlight_current_line" = true ]; then
-            printf "%s\n" "hook global -group crosshairs RawKey .+ crosshairs-update"
+            printf "%s\n" "hook global -group crosshairs RawKey .+ crosshairs-update-drawing"
         else
             printf "%s\n" "remove-hooks global crosshairs"
         fi
     }
+}
+
+define-command -hidden crosshairs-update %{
+    crosshairs-change-hooks
+    crosshairs-update-drawing
 }
 
 define-command crosshairs -docstring "Toggle Crosshairs or line/col highlighting" %{
@@ -57,7 +62,18 @@ define-command crosshairs -docstring "Toggle Crosshairs or line/col highlighting
             printf "%s\n" "set-option global highlight_current_column true"
         fi
     }
-    crosshairs-change-hooks
+    crosshairs-update
+}
+
+define-command crosshairs-enable -docstring "Enable Crosshairs or line/col highlighting" %{
+    set-option global highlight_current_line true
+    set-option global highlight_current_column true
+    crosshairs-update
+}
+
+define-command crosshairs-disable -docstring "disable Crosshairs or line/col highlighting" %{
+    set-option global highlight_current_line false
+    set-option global highlight_current_column false
     crosshairs-update
 }
 
@@ -69,7 +85,16 @@ define-command cursorline -docstring "Toggle Highlighting for current line" %{
             printf "%s\n" "set-option global highlight_current_line true"
         fi
     }
-    crosshairs-change-hooks
+    crosshairs-update
+}
+
+define-command cursorline-enable -docstring "Enable Highlighting for current line" %{
+    set-option global highlight_current_line true
+    crosshairs-update
+}
+
+define-command cursorline-disable -docstring "disable Highlighting for current line" %{
+    set-option global highlight_current_line false
     crosshairs-update
 }
 
@@ -81,8 +106,15 @@ define-command cursorcolumn -docstring "Toggle highlighting for current column" 
             printf "%s\n" "set-option global highlight_current_column true"
         fi
     }
-    crosshairs-change-hooks
     crosshairs-update
 }
 
+define-command cursorcolumn-enable -docstring "Enable highlighting for current column" %{
+    set-option global highlight_current_column true
+    crosshairs-update
+}
 
+define-command cursorcolumn-disable -docstring "disable highlighting for current column" %{
+    set-option global highlight_current_column false
+    crosshairs-update
+}
