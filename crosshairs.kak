@@ -79,37 +79,33 @@ define-command -override cursorcolumn-disable -docstring "Disable highlighting f
 #       Implementation commands      #
 #------------------------------------#
 
-define-command -override -hidden -docstring "Move/remove the line/column highlithers to match settings and cursor position" \
-crosshairs-update-drawing %{
-    try %{ remove-highlighter window/crosshairs-column }
+define-command -override -hidden -docstring "Move the line highlither" \
+update-line-highlither %{
     try %{ remove-highlighter window/crosshairs-line }
+    try %{ add-highlighter window/crosshairs-line line %val{cursor_line} crosshairs_line }
+}
 
-    try %{ evaluate-commands %sh{
-        [ "$kak_opt_highlight_debug" = true ] && echo "runnig crosshairs-update-drawing" >&2
-
-        if [ "$kak_opt_highlight_current_line" = true ]; then
-            [ "$kak_opt_highlight_debug" = true ] && echo "drawing line" >&2
-            printf "%s\n" "add-highlighter window/crosshairs-line line %val{cursor_line} crosshairs_line"
-        fi
-        if [ "$kak_opt_highlight_current_column" = true ]; then
-            [ "$kak_opt_highlight_debug" = true ] && echo "drawing column" >&2
-            printf "%s\n" "add-highlighter window/crosshairs-column column %val{cursor_display_column} crosshairs_column"
-        fi
-    } }
+define-command -override -hidden -docstring "Move the column highlither" \
+update-column-highlither %{
+    try %{ remove-highlighter window/crosshairs-column }
+    try %{ add-highlighter window/crosshairs-column column %val{cursor_display_column} crosshairs_column }
 }
 
 define-command -override -hidden -docstring "Add/remove crosshairs drawing hook" \
 crosshairs-change-hooks %{
+    remove-hooks global crosshairs
     evaluate-commands %sh{
         [ "$kak_opt_highlight_debug" = true ] && echo "runnig crosshairs-change-hooks" >&2
-        if [ "$kak_opt_highlight_current_column" = true ] || [ "$kak_opt_highlight_current_line" = true ]; then
-            [ "$kak_opt_highlight_debug" = true ] && echo "enabling draw hook" >&2
-            printf "%s\n" "hook global -group crosshairs RawKey .+ crosshairs-update-drawing"
-        else
-            [ "$kak_opt_highlight_debug" = true ] && echo "disabling draw hook" >&2
-            printf "%s\n" "remove-hooks global crosshairs"
+        if [ "$kak_opt_highlight_current_line" = true ]; then
+            [ "$kak_opt_highlight_debug" = true ] && echo "enabling line hook" >&2
+            printf "%s\n" "hook global -group crosshairs RawKey .+ update-line-highlither"
+            printf "%s\n" "update-line-highlither"
+        fi
+        if [ "$kak_opt_highlight_current_column" = true ]; then
+            [ "$kak_opt_highlight_debug" = true ] && echo "enabling column hook" >&2
+            printf "%s\n" "hook global -group crosshairs RawKey .+ update-column-highlither"
+            printf "%s\n" "update-column-highlither"
         fi
     }
-    crosshairs-update-drawing
 }
 
